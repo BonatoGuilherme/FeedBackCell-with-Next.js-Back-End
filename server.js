@@ -1,45 +1,18 @@
 // DEPENDÊNCIAS
 const express = require("express");
-const cors = require("cors");
-const session = require('express-session');
-const bodyParser = require('body-parser');
-const path = require('path');
 const mysql = require("mysql2");
-require('dotenv').config();
+const authRoutes = require("./routes/authRoutes");
+const configMiddlewares = require("./middlewares/config");
+require("dotenv").config();
 
 // INICIALIZAÇÃO DO EXPRESS
 const app = express();
 
 // MIDDLEWARES
-app.use(cors());
-app.use(express.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(session({
-    secret: 'feedbackcell_secret',
-    resave: false,
-    saveUninitialized: false,
-}));
+configMiddlewares(app);
 
 // ROTAS
-app.get("/api/feedback", (req, res) => {
-  res.json({ message: "API funcionando" })
-});
-
-// Rota de teste de conexão com MySQL
-app.get("/api/test-db", (req, res) => {
-  connection.query("SELECT 1", (err, results) => {
-    if (err) {
-      return res.status(500).json({ 
-        error: "Erro ao conectar ao banco", 
-        message: err.message 
-      });
-    }
-    res.json({ 
-      success: true, 
-      message: "Conectado ao MySQL com sucesso!" 
-    });
-  });
-});
+app.use("/api/auth", authRoutes);
 
 // CONEXÃO COM BANCO DE DADOS
 const connection = mysql.createConnection({
@@ -58,18 +31,9 @@ connection.connect((err) => {
   }
 });
 
-// Caso de erro de conexão
-connection.on("error", (err) => {
-  console.error(" Erro na conexão MySQL:", err.message);
-  if (err.code === "PROTOCOL_CONNECTION_LOST") {
-    console.log("Conexão perdida, reconectando...");
-  }
-});
-
 // INICIALIZAÇÃO DO SERVIDOR
 app.listen(5000, () => {
   console.log("🚀 Servidor rodando em http://localhost:5000");
-  console.log("📍 Teste de conexão: http://localhost:5000/api/test-db");
 });
 
 module.exports = { app, connection };
